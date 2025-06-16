@@ -14,27 +14,22 @@ for subject_code, html in raw_data.items():
     for row in rows:
         cols = row.find_all("td")
 
-        # ✅ Handle comment rows first
         if len(cols) >= 2 and "Comments for CRN" in cols[0].get_text():
             try:
-                # Extract CRN from first column
                 match = re.search(r"CRN (\d+):", cols[0].get_text())
                 if match:
                     crn_target = match.group(1)
-                    # Combine all <b> tags in the second column
                     comment_bolds = cols[1].find_all("b")
                     comment_text = " ".join(tag.get_text(strip=True) for tag in comment_bolds)
 
-                    # Attach to last-matching course
                     for course in reversed(parsed_courses):
                         if course["crn"] == crn_target:
                             course["comments"] = comment_text
                             break
             except Exception as e:
                 print(f"Error processing comment row: {e}")
-            continue  # ✅ Skip to next row
+            continue  
 
-        # ✅ Handle regular course rows
         if len(cols) < 12:
             continue
 
@@ -74,7 +69,6 @@ for subject_code, html in raw_data.items():
             print(f"Skipping row due to error: {e}")
             continue
 
-# ✅ Save final parsed data
 with open("courses.json", "w", encoding="utf-8") as out:
     json.dump(parsed_courses, out, indent=2)
 

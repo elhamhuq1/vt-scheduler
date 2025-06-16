@@ -3,7 +3,6 @@ from bs4 import BeautifulSoup
 import json
 import time
 
-# 🔹 Step 1: Get list of subject codes (departments)
 def get_subject_codes():
     return [
     "AAD", "AAEC", "ACIS", "ADS", "ADV", "AFST", "AHRM", "AINS", "AIS", "ALCE", "ALS", "AOE", "APS", "APSC", "ARBC", "ARCH", "ART", "AS",
@@ -20,7 +19,6 @@ def get_subject_codes():
 
 
 
-# 🔹 Step 2: Fetch course HTML for a subject code
 def fetch_courses_by_subject(subj_code):
     data = {
         'CAMPUS': '0',
@@ -51,7 +49,6 @@ def fetch_courses_by_subject(subj_code):
     return response.text
 
 
-# 🔹 Step 3: Loop over all subjects, collect data
 def main():
     all_courses = {}
     subject_codes = get_subject_codes()
@@ -62,18 +59,15 @@ def main():
         print(f"Fetching: {code}")
         html = fetch_courses_by_subject(code)
 
-        # Store raw HTML per subject (or parse later)
         all_courses[code] = html
 
-        time.sleep(1)  # avoid overloading the server
+        time.sleep(1)  
 
-    # 🔹 Save result to file
     with open("all_courses_raw.json", "w", encoding="utf-8") as f:
         json.dump(all_courses, f, indent=2)
 
     print("Done! Saved to all_courses_raw.json")
 
 
-# 🔹 Entry point
 if __name__ == "__main__":
     main()
