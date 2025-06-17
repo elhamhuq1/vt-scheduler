@@ -1,19 +1,13 @@
-import Navbar from './components/Navbar'
-import EmptyState from './components/EmptyState'
+import Navbar from './components/Navbar';
+import AppRouter from './router';
 
-function App() {
+export default function App() {
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="relative">
-          <div className="mx-auto max-w-3xl py-32">
-            <EmptyState />
-          </div>
-        </div>
+      <Navbar/>
+      <main className="container mx-auto px-4 py-8">
+        <AppRouter />
       </main>
     </div>
-  )
+  );
 }
-
-export default App
