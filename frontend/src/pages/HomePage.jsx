@@ -1,28 +1,44 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useCourses } from '../context/CourseContext';
 import DeleteIcon from '../components/icons/DeleteIcon';
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const { selectedCourses, removeCourse } = useCourses();
-  const [selectedItems, setSelectedItems] = useState([]);
+  const location = useLocation();
+  const { 
+    selectedCourses, 
+    removeCourse, 
+    checkedCourses, 
+    updateCheckedCourses,
+    generatedSchedules,
+    generatePossibleSchedules 
+  } = useCourses();
+  const [selectedItems, setSelectedItems] = useState(checkedCourses);
+
+  // Force re-render when location changes
+  useEffect(() => {
+    setSelectedItems(checkedCourses);
+  }, [location, checkedCourses]);
 
   const handleSelectAll = (e) => {
-    if (e.target.checked) {
-      setSelectedItems(selectedCourses.map(course => `${course.subject}-${course.course_number}`));
-    } else {
-      setSelectedItems([]);
-    }
+    const allCourseIds = selectedCourses.map(course => `${course.subject}-${course.course_number}`);
+    const newSelected = e.target.checked ? allCourseIds : [];
+    setSelectedItems(newSelected);
+    updateCheckedCourses(newSelected);
   };
 
   const handleSelectCourse = (courseId) => {
-    setSelectedItems(prev => {
-      if (prev.includes(courseId)) {
-        return prev.filter(id => id !== courseId);
-      }
-      return [...prev, courseId];
-    });
+    const newSelected = selectedItems.includes(courseId)
+      ? selectedItems.filter(id => id !== courseId)
+      : [...selectedItems, courseId];
+    
+    setSelectedItems(newSelected);
+    updateCheckedCourses(newSelected);
+  };
+
+  const handleGenerateSchedules = () => {
+    generatePossibleSchedules();
   };
 
   return (
@@ -126,39 +142,59 @@ export default function HomePage() {
           Schedules
         </h2>
         <div className="flex flex-col p-4">
-          <div className="flex flex-col items-center gap-6 rounded-xl border-2 border-dashed border-[#dde0e3] px-6 py-14">
-            <div className="flex max-w-[480px] flex-col items-center gap-2">
-              <p className="text-[#121416] text-lg font-bold leading-tight tracking-[-0.015em] max-w-[480px] text-center">
-                No schedules generated
-              </p>
-              <p className="text-[#121416] text-sm font-normal leading-normal max-w-[480px] text-center">
-                {selectedCourses.length === 0 
-                  ? "Add courses to generate schedules"
-                  : selectedCourses.length === 1 
-                    ? "Add more courses to generate schedules"
-                    : "Click generate to view possible schedules"}
-              </p>
+          {selectedCourses.length <= 1 ? (
+            <div className="flex flex-col items-center gap-6 rounded-xl border-2 border-dashed border-[#dde0e3] px-6 py-14">
+              <div className="flex max-w-[480px] flex-col items-center gap-2">
+                <p className="text-[#121416] text-lg font-bold leading-tight tracking-[-0.015em] max-w-[480px] text-center">
+                  No schedules generated
+                </p>
+                <p className="text-[#121416] text-sm font-normal leading-normal max-w-[480px] text-center">
+                  {selectedCourses.length === 0 
+                    ? "Add courses to generate schedules"
+                    : "Add more courses to generate schedules"}
+                </p>
+              </div>
+              <button
+                onClick={() => navigate('/search')}
+                className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 px-4 bg-[#f1f2f4] text-[#121416] text-sm font-bold leading-normal tracking-[0.015em]"
+              >
+                Add Courses
+              </button>
             </div>
-            <button 
-              onClick={() => {
-                if (selectedCourses.length > 1) {
-                  navigate('/schedule');
-                } else {
-                  navigate('/search');
-                }
-              }}
-              disabled={selectedCourses.length <= 1}
-              className={`flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 px-4 text-sm font-bold leading-normal tracking-[0.015em] ${
-                selectedCourses.length > 1
-                  ? 'bg-[#1978e5] text-white'
-                  : 'bg-[#f1f2f4] text-[#121416]'
-              } ${selectedCourses.length <= 1 ? 'opacity-50' : ''}`}
-            >
-              <span className="truncate">
-                {selectedCourses.length > 1 ? 'Generate Schedules' : 'Add Courses'}
-              </span>
-            </button>
-          </div>
+          ) : generatedSchedules.length === 0 ? (
+            <div className="flex flex-col items-center gap-6 rounded-xl border-2 border-dashed border-[#dde0e3] px-6 py-14">
+              <button
+                onClick={handleGenerateSchedules}
+                className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 px-4 bg-[#1978e5] text-white text-sm font-bold leading-normal tracking-[0.015em]"
+              >
+                Generate Schedules
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {generatedSchedules.map((schedule, index) => (
+                <div 
+                  key={index}
+                  className="flex justify-between items-center p-4 rounded-xl border border-[#dde0e3] hover:bg-[#f8f9fa] cursor-pointer"
+                  onClick={() => navigate('/schedule', { state: { scheduleIndex: index }})}
+                >
+                  <div className="flex flex-col">
+                    <span className="text-[#121416] text-lg font-bold">
+                      Schedule {index + 1}
+                    </span>
+                    <span className="text-[#121416] text-sm">
+                      {schedule.map(section => 
+                        `${section.course_number}-${section.subject}-${section.crn}`
+                      ).join(', ')}
+                    </span>
+                  </div>
+                  <button className="flex min-w-[84px] cursor-pointer items-center justify-center rounded-xl h-10 px-4 bg-[#f1f2f4] text-[#121416] text-sm font-bold">
+                    View
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

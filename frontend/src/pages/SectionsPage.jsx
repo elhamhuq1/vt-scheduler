@@ -1,38 +1,41 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useCourses } from '../context/CourseContext';
 
 export default function SectionsPage() {
-  const [sections, setSections] = useState([]);
-  const [selectedCRNs, setSelectedCRNs] = useState([]);
-  const { subject, courseNumber } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
+  const { subject, courseNumber } = useParams();
+  const { selectedSections, updateSelectedSections } = useCourses();
+  const [sections, setSections] = useState([]);
+  const [selectedCRNs, setSelectedCRNs] = useState(() => {
+    const courseId = `${subject}-${courseNumber}`;
+    return (selectedSections[courseId] || []).map(section => section.crn);
+  });
 
+  // Refetch data when route changes
   useEffect(() => {
     const fetchSections = async () => {
       try {
         const response = await fetch(`http://localhost:5000/api/courses?subject=${subject}`);
         if (!response.ok) throw new Error('Failed to fetch sections');
         const data = await response.json();
-        // Filter sections for the specific course number
-        const courseSections = data.filter(section => 
-          section.course_number === courseNumber
-        );
-        setSections(courseSections);
+        setSections(data.filter(section => section.course_number === courseNumber));
       } catch (error) {
         console.error('Error:', error);
       }
     };
 
     fetchSections();
-  }, [subject, courseNumber]);
+  }, [subject, courseNumber, location]);
 
-  const handleCheckboxChange = (crn) => {
-    setSelectedCRNs(prev => {
-      if (prev.includes(crn)) {
-        return prev.filter(x => x !== crn);
-      }
-      return [...prev, crn];
-    });
+  const handleBackToHome = () => {
+    const courseId = `${subject}-${courseNumber}`;
+    const selectedSectionData = sections.filter(section => 
+      selectedCRNs.includes(section.crn)
+    );
+    updateSelectedSections(courseId, selectedSectionData);
+    navigate('/', { state: { from: location.pathname } });
   };
 
   return (
@@ -89,7 +92,7 @@ export default function SectionsPage() {
 
         <div className="flex justify-between mt-6 px-4">
           <button
-            onClick={() => navigate('/')}
+            onClick={handleBackToHome}
             className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-[#1978e5] hover:bg-[#1461b4] rounded-xl transition-colors cursor-pointer"
           >
             <svg 
