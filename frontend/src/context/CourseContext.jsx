@@ -73,27 +73,50 @@ export function CourseProvider({ children }) {
   };
 
   const generatePossibleSchedules = () => {
-    // Only consider checked courses
-    const coursesToSchedule = selectedCourses.filter(course => 
-      checkedCourses.includes(`${course.subject}-${course.course_number}`)
-    );
+    console.log('Starting schedule generation...');
+    console.log('Selected sections:', selectedSections);
+    
+    // Get all courses that have selected sections
+    const coursesWithSections = Object.entries(selectedSections)
+      .filter(([courseId, sections]) => sections && sections.length > 0)
+      .map(([courseId, sections]) => ({ courseId, sections }));
 
-    // Get selected sections for each course
-    const courseSections = coursesToSchedule.map(course => {
-      const courseId = `${course.subject}-${course.course_number}`;
-      return {
-        course,
-        sections: selectedSections[courseId] || []
-      };
-    });
+    console.log('Courses with sections:', coursesWithSections);
+
+    if (coursesWithSections.length < 2) {
+      console.log('Need at least 2 courses with sections');
+      setGeneratedSchedules([]);
+      return [];
+    }
 
     // Generate all possible combinations
-    const schedules = generateScheduleCombinations(courseSections);
-    
+    const allCombinations = generateCombinations(coursesWithSections.map(c => c.sections));
+    console.log('All combinations:', allCombinations);
+
     // Filter out schedules with conflicts
-    const validSchedules = schedules.filter(schedule => !hasTimeConflicts(schedule));
+    const validSchedules = allCombinations.filter(schedule => !hasTimeConflicts(schedule));
+    console.log('Valid schedules:', validSchedules);
+
     setGeneratedSchedules(validSchedules);
     return validSchedules;
+  };
+
+  // Helper function to generate combinations
+  const generateCombinations = (sectionGroups) => {
+    if (sectionGroups.length === 0) return [[]];
+    if (sectionGroups.length === 1) return sectionGroups[0].map(section => [section]);
+
+    const [first, ...rest] = sectionGroups;
+    const restCombinations = generateCombinations(rest);
+    
+    const combinations = [];
+    first.forEach(section => {
+      restCombinations.forEach(combination => {
+        combinations.push([section, ...combination]);
+      });
+    });
+    
+    return combinations;
   };
 
   return (
@@ -114,22 +137,6 @@ export function CourseProvider({ children }) {
 }
 
 // Helper functions for schedule generation
-function generateScheduleCombinations(courseSections) {
-  if (courseSections.length === 0) return [[]];
-  
-  const [first, ...rest] = courseSections;
-  const restCombinations = generateScheduleCombinations(rest);
-  
-  const combinations = [];
-  first.sections.forEach(section => {
-    restCombinations.forEach(combination => {
-      combinations.push([section, ...combination]);
-    });
-  });
-  
-  return combinations;
-}
-
 function hasTimeConflicts(schedule) {
   for (let i = 0; i < schedule.length; i++) {
     for (let j = i + 1; j < schedule.length; j++) {
@@ -142,12 +149,28 @@ function hasTimeConflicts(schedule) {
 }
 
 function sectionsOverlap(section1, section2) {
+  console.log('Checking overlap between:', {
+    section1: { days: section1.days, begin: section1.begin_time, end: section1.end_time },
+    section2: { days: section2.days, begin: section2.begin_time, end: section2.end_time }
+  });
+
   // Check if sections share any days
-  const days1 = section1.days.split('');
-  const days2 = section2.days.split('');
+  if (!section1.days || !section2.days) {
+    console.log('Missing days data');
+    return false;
+  }
+  
+  // Parse space-separated days like "M W" -> ["M", "W"]
+  const days1 = section1.days.trim().split(/\s+/);
+  const days2 = section2.days.trim().split(/\s+/);
   const sharedDays = days1.filter(day => days2.includes(day));
   
-  if (sharedDays.length === 0) return false;
+  console.log('Days comparison:', { days1, days2, sharedDays });
+  
+  if (sharedDays.length === 0) {
+    console.log('No shared days - no conflict');
+    return false;
+  }
 
   // Convert times to minutes for comparison
   const start1 = timeToMinutes(section1.begin_time);
@@ -155,12 +178,50 @@ function sectionsOverlap(section1, section2) {
   const start2 = timeToMinutes(section2.begin_time);
   const end2 = timeToMinutes(section2.end_time);
 
-  return !(end1 <= start2 || end2 <= start1);
+  console.log('Time comparison:', {
+    section1: { start: start1, end: end1, original: { begin: section1.begin_time, end: section1.end_time }},
+    section2: { start: start2, end: end2, original: { begin: section2.begin_time, end: section2.end_time }}
+  });
+
+  const hasOverlap = !(end1 <= start2 || end2 <= start1);
+  console.log('Time overlap result:', hasOverlap);
+  
+  return hasOverlap;
 }
 
 function timeToMinutes(timeString) {
-  const [hours, minutes] = timeString.split(':').map(Number);
-  return hours * 60 + minutes;
+  if (!timeString || timeString.includes('ARR') || timeString.includes('TBA')) {
+    console.log('Invalid or arranged time:', timeString);
+    return 0;
+  }
+  
+  console.log('Converting time:', timeString);
+  
+  // Handle 12-hour format like "4:00PM", "10:10AM"
+  const timeRegex = /^(\d{1,2}):(\d{2})(AM|PM)$/i;
+  const match = timeString.trim().match(timeRegex);
+  
+  if (!match) {
+    console.log('Invalid time format:', timeString);
+    return 0;
+  }
+  
+  let [, hours, minutes, period] = match;
+  hours = parseInt(hours);
+  minutes = parseInt(minutes);
+  
+  // Convert to 24-hour format
+  if (period.toUpperCase() === 'PM' && hours !== 12) {
+    hours += 12;
+  } else if (period.toUpperCase() === 'AM' && hours === 12) {
+    hours = 0;
+  }
+  
+  const result = hours * 60 + minutes;
+  
+  console.log(`Time conversion: ${timeString} -> ${hours}:${minutes.toString().padStart(2, '0')} -> ${result} minutes`);
+  
+  return result;
 }
 
 export const useCourses = () => useContext(CourseContext);

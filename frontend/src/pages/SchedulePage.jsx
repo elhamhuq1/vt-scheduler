@@ -1,118 +1,98 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useCourses } from '../context/CourseContext';
 import ScheduleCalendar from '../components/ScheduleCalendar';
 
 export default function SchedulePage() {
   const navigate = useNavigate();
-  const { selectedCourses } = useCourses();
+  const location = useLocation();
+  const { generatedSchedules } = useCourses();
   const [scheduleData, setScheduleData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [currentScheduleIndex, setCurrentScheduleIndex] = useState(0);
 
   useEffect(() => {
-    const generateScheduleData = async () => {
-      setLoading(true);
-      try {
-        // Transform your course data to match the calendar format
-        const transformedData = await transformCoursesToSchedule(selectedCourses);
-        setScheduleData(transformedData);
-      } catch (error) {
-        console.error('Error generating schedule:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    // Get schedule index from navigation state or default to 0
+    const scheduleIndex = location.state?.scheduleIndex || 0;
+    setCurrentScheduleIndex(scheduleIndex);
 
-    if (selectedCourses.length > 0) {
-      generateScheduleData();
-    } else {
-      setLoading(false);
+    if (generatedSchedules.length > 0 && generatedSchedules[scheduleIndex]) {
+      const transformedData = transformSectionsToSchedule(generatedSchedules[scheduleIndex]);
+      setScheduleData(transformedData);
     }
-  }, [selectedCourses]);
+  }, [generatedSchedules, location.state]);
 
-  const transformCoursesToSchedule = async (courses) => {
-    const scheduleItems = [];
+  const transformSectionsToSchedule = (sections) => {
     const colors = [
       'bg-blue-500', 'bg-green-500', 'bg-purple-500', 
       'bg-orange-500', 'bg-red-500', 'bg-indigo-500',
       'bg-pink-500', 'bg-teal-500'
     ];
 
-    for (let i = 0; i < courses.length; i++) {
-      const course = courses[i];
-      
-      // Fetch sections for each course
-      try {
-        const response = await fetch(`http://localhost:5000/api/courses?subject=${course.subject}`);
-        if (response.ok) {
-          const sections = await response.json();
-          const courseSections = sections.filter(section => 
-            section.course_number === course.course_number
-          );
-
-          // For now, take the first section (you can enhance this to let users choose)
-          if (courseSections.length > 0) {
-            const section = courseSections[0];
-            
-            scheduleItems.push({
-              id: section.crn,
-              name: `${course.subject} ${course.course_number}`,
-              title: course.title,
-              instructor: section.instructor || 'TBA',
-              location: section.location || 'TBA',
-              days: parseDays(section.days),
-              startTime: formatTime(section.begin_time),
-              endTime: formatTime(section.end_time),
-              color: colors[i % colors.length],
-              credits: course.credits || 3,
-            });
-          }
-        }
-      } catch (error) {
-        console.error(`Error fetching sections for ${course.subject} ${course.course_number}:`, error);
-      }
-    }
-
-    return scheduleItems;
+    return sections.map((section, index) => ({
+      id: section.crn,
+      name: `${section.subject} ${section.course_number}`,
+      title: section.title || 'Course Title',
+      instructor: section.instructor || 'TBA',
+      location: section.location || 'TBA',
+      days: parseDays(section.days),
+      startTime: formatTime(section.begin_time),
+      endTime: formatTime(section.end_time),
+      color: colors[index % colors.length],
+      credits: section.credits || 3,
+    }));
   };
 
-  const parseDays = (daysString) => {
-    if (!daysString) return [];
-    
-    const dayMap = {
-      'M': 'Monday',
-      'T': 'Tuesday', 
-      'W': 'Wednesday',
-      'R': 'Thursday',
-      'F': 'Friday'
-    };
-
-    return daysString.split('').map(day => dayMap[day]).filter(Boolean);
+const parseDays = (daysString) => {
+  if (!daysString || daysString.includes('ARR')) return [];
+  
+  const dayMap = {
+    'M': 'Monday',
+    'T': 'Tuesday', 
+    'W': 'Wednesday',
+    'R': 'Thursday',
+    'F': 'Friday'
   };
 
-  const formatTime = (timeString) => {
-    if (!timeString) return '00:00';
-    
-    // Convert from your backend format to HH:MM format
-    // Adjust this based on your actual time format
-    if (timeString.includes(':')) {
-      return timeString.substring(0, 5); // Take first 5 characters (HH:MM)
-    }
-    
-    return timeString;
-  };
+  // Handle space-separated format like "M W" or "T R"
+  return daysString.trim().split(/\s+/).map(day => dayMap[day]).filter(Boolean);
+};
 
-  if (selectedCourses.length === 0) {
+const formatTime = (timeString) => {
+  if (!timeString || timeString.includes('ARR') || timeString.includes('TBA')) {
+    return '00:00';
+  }
+  
+  // Convert 12-hour format to 24-hour format for the calendar
+  const timeRegex = /^(\d{1,2}):(\d{2})(AM|PM)$/i;
+  const match = timeString.trim().match(timeRegex);
+  
+  if (!match) return '00:00';
+  
+  let [, hours, minutes, period] = match;
+  hours = parseInt(hours);
+  minutes = parseInt(minutes);
+  
+  // Convert to 24-hour format
+  if (period.toUpperCase() === 'PM' && hours !== 12) {
+    hours += 12;
+  } else if (period.toUpperCase() === 'AM' && hours === 12) {
+    hours = 0;
+  }
+  
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+};
+
+  if (generatedSchedules.length === 0) {
     return (
       <div className="px-40 flex flex-1 justify-center py-5">
         <div className="flex flex-col max-w-[960px] flex-1">
           <div className="flex flex-col items-center gap-6 rounded-xl border-2 border-dashed border-[#dde0e3] px-6 py-14">
             <div className="flex max-w-[480px] flex-col items-center gap-2">
               <p className="text-[#121416] text-lg font-bold leading-tight tracking-[-0.015em] max-w-[480px] text-center">
-                No courses selected
+                No schedules generated
               </p>
               <p className="text-[#121416] text-sm font-normal leading-normal max-w-[480px] text-center">
-                Add courses to generate and view your schedule
+                Generate schedules from the home page to view them here
               </p>
             </div>
             <button
@@ -132,9 +112,14 @@ export default function SchedulePage() {
       <div className="flex flex-col max-w-[960px] flex-1">
         {/* Header */}
         <div className="flex justify-between items-center px-4 pb-3 pt-5">
-          <h2 className="text-[#121416] text-[22px] font-bold leading-tight tracking-[-0.015em]">
-            Generated Schedule
-          </h2>
+          <div>
+            <h2 className="text-[#121416] text-[22px] font-bold leading-tight tracking-[-0.015em]">
+              Schedule {currentScheduleIndex + 1}
+            </h2>
+            <p className="text-[#637488] text-sm">
+              {generatedSchedules.length} schedule(s) available
+            </p>
+          </div>
           <div className="flex gap-3">
             <button
               onClick={() => navigate('/')}
@@ -151,19 +136,36 @@ export default function SchedulePage() {
           </div>
         </div>
 
-        {/* Schedule Calendar */}
-        {loading ? (
-          <div className="flex justify-center items-center py-20">
-            <div className="text-[#121416] text-lg">Loading schedule...</div>
-          </div>
-        ) : (
-          <div className="bg-white rounded-xl border border-[#dde0e3] overflow-hidden">
-            <ScheduleCalendar courses={scheduleData} />
+        {/* Schedule Navigation */}
+        {generatedSchedules.length > 1 && (
+          <div className="flex justify-center gap-2 mb-4">
+            {generatedSchedules.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => {
+                  setCurrentScheduleIndex(index);
+                  const transformedData = transformSectionsToSchedule(generatedSchedules[index]);
+                  setScheduleData(transformedData);
+                }}
+                className={`px-3 py-1 rounded-lg text-sm font-medium ${
+                  index === currentScheduleIndex
+                    ? 'bg-[#1978e5] text-white'
+                    : 'bg-[#f1f2f4] text-[#121416] hover:bg-[#e1e3e6]'
+                }`}
+              >
+                Schedule {index + 1}
+              </button>
+            ))}
           </div>
         )}
 
+        {/* Schedule Calendar */}
+        <div className="bg-white rounded-xl border border-[#dde0e3] overflow-hidden">
+          <ScheduleCalendar courses={scheduleData} />
+        </div>
+
         {/* Schedule Summary */}
-        {!loading && scheduleData.length > 0 && (
+        {scheduleData.length > 0 && (
           <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white p-6 rounded-xl border border-[#dde0e3]">
               <h3 className="text-[#121416] text-lg font-bold mb-2">Total Credits</h3>
@@ -180,11 +182,9 @@ export default function SchedulePage() {
             </div>
 
             <div className="bg-white p-6 rounded-xl border border-[#dde0e3]">
-              <h3 className="text-[#121416] text-lg font-bold mb-2">Schedule Density</h3>
-              <div className="text-3xl font-bold text-orange-600">
-                {Math.round((scheduleData.length * 3) / 5 * 10) / 10}
-              </div>
-              <p className="text-sm text-[#637488]">Hours per day average</p>
+              <h3 className="text-[#121416] text-lg font-bold mb-2">Schedule Options</h3>
+              <div className="text-3xl font-bold text-orange-600">{generatedSchedules.length}</div>
+              <p className="text-sm text-[#637488]">Valid combinations found</p>
             </div>
           </div>
         )}
