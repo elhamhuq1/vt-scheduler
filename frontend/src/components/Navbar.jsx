@@ -13,7 +13,7 @@ const Navbar = () => {
       <div className="container mx-auto flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="text-black font-bold text-xl">
-          SchedSync
+          SchedSynced
           <img src='assets/images/logo.webp' alt='VT Logo' className='inline-block ml-2 h-8 w-8' />
         </Link>
 
