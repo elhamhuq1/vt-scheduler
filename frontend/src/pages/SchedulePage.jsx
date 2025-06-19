@@ -127,35 +127,76 @@ const formatTime = (timeString) => {
             >
               Back to Home
             </button>
-            <button
-              onClick={() => window.print()}
-              className="flex min-w-[84px] cursor-pointer items-center justify-center rounded-xl h-10 px-4 bg-[#1978e5] text-white text-sm font-bold leading-normal tracking-[0.015em]"
-            >
-              Export Schedule
-            </button>
           </div>
         </div>
 
         {/* Schedule Navigation */}
         {generatedSchedules.length > 1 && (
-          <div className="flex justify-center gap-2 mb-4">
-            {generatedSchedules.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => {
-                  setCurrentScheduleIndex(index);
-                  const transformedData = transformSectionsToSchedule(generatedSchedules[index]);
+          <div className="flex justify-center items-center gap-2 mb-4">
+            <button
+              onClick={() => {
+                if (currentScheduleIndex > 0) {
+                  setCurrentScheduleIndex(currentScheduleIndex - 1);
+                  const transformedData = transformSectionsToSchedule(generatedSchedules[currentScheduleIndex - 1]);
                   setScheduleData(transformedData);
-                }}
-                className={`px-3 py-1 rounded-lg text-sm font-medium ${
-                  index === currentScheduleIndex
-                    ? 'bg-[#1978e5] text-white'
-                    : 'bg-[#f1f2f4] text-[#121416] hover:bg-[#e1e3e6]'
-                }`}
-              >
-                Schedule {index + 1}
-              </button>
-            ))}
+                }
+              }}
+              disabled={currentScheduleIndex === 0}
+              className="px-3 py-1 rounded-lg text-sm font-medium bg-[#f1f2f4] text-[#121416] hover:bg-[#e1e3e6] disabled:opacity-50"
+            >
+              Previous
+            </button>
+            {/* Show up to 2 before and 2 after the current index */}
+            {generatedSchedules.map((_, index) => {
+              if (
+                index === 0 ||
+                index === generatedSchedules.length - 1 ||
+                (index >= currentScheduleIndex - 2 && index <= currentScheduleIndex + 2)
+              ) {
+                return (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      setCurrentScheduleIndex(index);
+                      const transformedData = transformSectionsToSchedule(generatedSchedules[index]);
+                      setScheduleData(transformedData);
+                    }}
+                    className={`px-3 py-1 rounded-lg text-sm font-medium ${
+                      index === currentScheduleIndex
+                        ? 'bg-[#1978e5] text-white'
+                        : 'bg-[#f1f2f4] text-[#121416] hover:bg-[#e1e3e6]'
+                    }`}
+                  >
+                    {index + 1}
+                  </button>
+                );
+              }
+              // Show ellipsis if needed
+              if (
+                (index === currentScheduleIndex - 3 && index > 1) ||
+                (index === currentScheduleIndex + 3 && index < generatedSchedules.length - 2)
+              ) {
+                return (
+                  <span key={index} className="px-2 text-[#637488]">
+                    ...
+                  </span>
+                );
+              }
+              return null;
+            })}
+            <button
+              onClick={() => {
+                if (currentScheduleIndex < generatedSchedules.length - 1) {
+                  setCurrentScheduleIndex(currentScheduleIndex + 1);
+                  const transformedData = transformSectionsToSchedule(generatedSchedules[currentScheduleIndex + 1]);
+                  setScheduleData(transformedData);
+                }
+              }}
+              disabled={currentScheduleIndex === generatedSchedules.length - 1}
+              className="px-3 py-1 rounded-lg text-sm font-medium bg-[#f1f2f4] text-[#121416] hover:bg-[#e1e3e6] disabled:opacity-50"
+            >
+              Next
+            </button>
           </div>
         )}
 
