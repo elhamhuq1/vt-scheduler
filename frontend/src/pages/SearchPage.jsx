@@ -3,7 +3,7 @@ import { useCourses } from '../context/CourseContext';
 import { useNavigate } from 'react-router-dom';
 
 export default function SearchPage() {
-  const API_BASE_URL = process.env.API_BASE_URL
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
   const [subjects, setSubjects] = useState([]);
   const [courses, setCourses] = useState([]);
   const [selectedSubject, setSelectedSubject] = useState('');

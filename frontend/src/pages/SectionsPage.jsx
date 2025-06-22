@@ -3,7 +3,7 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useCourses } from '../context/CourseContext';
 
 export default function SectionsPage() {
-  const API_BASE_URL = process.env.API_BASE_URL
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const location = useLocation();
   const navigate = useNavigate();
   const { subject, courseNumber } = useParams();
