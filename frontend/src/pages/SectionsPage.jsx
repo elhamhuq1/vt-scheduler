@@ -3,6 +3,7 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useCourses } from '../context/CourseContext';
 
 export default function SectionsPage() {
+  const API_BASE_URL = process.env.API_BASE_URL
   const location = useLocation();
   const navigate = useNavigate();
   const { subject, courseNumber } = useParams();
@@ -17,7 +18,7 @@ export default function SectionsPage() {
   useEffect(() => {
     const fetchSections = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/courses?subject=${subject}`);
+        const response = await fetch(`${API_BASE_URL}/api/courses?subject=${subject}`);
         if (!response.ok) throw new Error('Failed to fetch sections');
         const data = await response.json();
         setSections(data.filter(section => section.course_number === courseNumber));

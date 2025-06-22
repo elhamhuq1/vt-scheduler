@@ -3,6 +3,7 @@ import { useCourses } from '../context/CourseContext';
 import { useNavigate } from 'react-router-dom';
 
 export default function SearchPage() {
+  const API_BASE_URL = process.env.API_BASE_URL
   const [subjects, setSubjects] = useState([]);
   const [courses, setCourses] = useState([]);
   const [selectedSubject, setSelectedSubject] = useState('');
@@ -11,10 +12,11 @@ export default function SearchPage() {
   const navigate = useNavigate();
   const selectedCourseData = courses.find(c => c.course_number === selectedCourse);
 
+  
   useEffect(() => {
     const fetchSubjects = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/courses/subjects');
+        const response = await await fetch(`${API_BASE_URL}/api/courses/subjects`);;
         if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
         setSubjects(data);
@@ -32,7 +34,7 @@ export default function SearchPage() {
         return;
       }
       try {
-        const response = await fetch(`http://localhost:5000/api/courses/numbers?subject=${selectedSubject}`);
+        const response = await fetch(`${API_BASE_URL}/api/courses/numbers?subject=${selectedSubject}`);
         if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
         setCourses(data);
