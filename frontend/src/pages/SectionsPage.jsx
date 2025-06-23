@@ -60,7 +60,7 @@ export default function SectionsPage() {
           <table className="min-w-full border-collapse">
             <thead>
               <tr className="bg-[#f0f2f4]">
-                <th className="px-4 py-2 text-left font-bold text-sm">Select</th>
+                <th className="sticky left-0 bg-white px-4 py-2 text-left font-bold text-sm">Select</th>
                 <th className="px-4 py-2 text-left font-bold text-sm">CRN</th>
                 <th className="px-4 py-2 text-left font-bold text-sm">Subject</th>
                 <th className="px-4 py-2 text-left font-bold text-sm">Course</th>
