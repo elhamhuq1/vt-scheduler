@@ -51,13 +51,13 @@ export default function SectionsPage() {
 
   return (
     <div className="px-40 flex flex-1 justify-center py-5">
-      <div className="flex flex-col max-w-[960px] flex-1">
+      <div className="flex flex-col flex-1">
         <h2 className="text-[#121416] text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3">
           Sections for {subject} {courseNumber}
         </h2>
         
         <div className="w-full overflow-x-auto border border-[#dde0e3] rounded-lg">
-          <div className="min-w-[800px]">
+          <div className="min-w-[1000px]">
             {" "}
             {/* Minimum width to ensure proper layout */}
             <table className="w-full border-collapse">
