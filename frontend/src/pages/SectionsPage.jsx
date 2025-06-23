@@ -56,8 +56,8 @@ export default function SectionsPage() {
           Sections for {subject} {courseNumber}
         </h2>
         
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
+        <div className="w-fulloverflow-x-auto">
+          <table className="min-w-full border-collapse">
             <thead>
               <tr className="bg-[#f0f2f4]">
                 <th className="px-4 py-2 text-left font-bold text-sm">Select</th>
