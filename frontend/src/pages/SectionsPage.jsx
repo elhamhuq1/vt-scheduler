@@ -56,49 +56,57 @@ export default function SectionsPage() {
           Sections for {subject} {courseNumber}
         </h2>
         
-        <div className="w-fulloverflow-x-auto">
-          <table className="min-w-full border-collapse">
-            <thead>
-              <tr className="bg-[#f0f2f4]">
-                <th className="sticky left-0 bg-white px-4 py-2 text-left font-bold text-sm">Select</th>
-                <th className="px-4 py-2 text-left font-bold text-sm">CRN</th>
-                <th className="px-4 py-2 text-left font-bold text-sm">Subject</th>
-                <th className="px-4 py-2 text-left font-bold text-sm">Course</th>
-                <th className="px-4 py-2 text-left font-bold text-sm">Modality</th>
-                <th className="px-4 py-2 text-left font-bold text-sm">Instructor</th>
-                <th className="px-4 py-2 text-left font-bold text-sm">Days</th>
-                <th className="px-4 py-2 text-left font-bold text-sm">Begin Time</th>
-                <th className="px-4 py-2 text-left font-bold text-sm">End Time</th>
-                <th className="px-4 py-2 text-left font-bold text-sm">Location</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sections.map((section) => (
-                <tr 
-                  key={section.crn}
-                  className="border-b border-[#dde0e3] hover:bg-[#f8f9fa]"
-                >
-                  <td className="px-4 py-2">
-                    <input
-                      type="checkbox"
-                      checked={selectedCRNs.includes(section.crn)}
-                      onChange={() => handleCheckboxChange(section.crn)}
-                      className="rounded border-gray-300 text-[#1978e5] focus:ring-[#1978e5]"
-                    />
-                  </td>
-                  <td className="px-4 py-2">{section.crn}</td>
-                  <td className="px-4 py-2">{section.subject}</td>
-                  <td className="px-4 py-2">{section.course_number}</td>
-                  <td className="px-4 py-2">{section.modality}</td>
-                  <td className="px-4 py-2">{section.instructor}</td>
-                  <td className="px-4 py-2">{section.days}</td>
-                  <td className="px-4 py-2">{section.begin_time}</td>
-                  <td className="px-4 py-2">{section.end_time}</td>
-                  <td className="px-4 py-2">{section.location}</td>
+        <div className="w-full overflow-x-auto border border-[#dde0e3] rounded-lg">
+          <div className="min-w-[800px]">
+            {" "}
+            {/* Minimum width to ensure proper layout */}
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-[#f0f2f4]">
+                  <th className="sticky left-0 bg-[#f0f2f4] z-10 px-4 py-3 text-left font-bold text-sm border-r border-[#dde0e3] min-w-[80px]">
+                    Select
+                  </th>
+                  <th className="px-4 py-3 text-left font-bold text-sm min-w-[80px]">CRN</th>
+                  <th className="px-4 py-3 text-left font-bold text-sm min-w-[80px]">Subject</th>
+                  <th className="px-4 py-3 text-left font-bold text-sm min-w-[80px]">Course</th>
+                  <th className="px-4 py-3 text-left font-bold text-sm min-w-[120px]">Modality</th>
+                  <th className="px-4 py-3 text-left font-bold text-sm min-w-[120px]">Instructor</th>
+                  <th className="px-4 py-3 text-left font-bold text-sm min-w-[80px]">Days</th>
+                  <th className="px-4 py-3 text-left font-bold text-sm min-w-[100px]">Begin Time</th>
+                  <th className="px-4 py-3 text-left font-bold text-sm min-w-[100px]">End Time</th>
+                  <th className="px-4 py-3 text-left font-bold text-sm min-w-[120px]">Location</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {sections.map((section) => (
+                  <tr key={section.crn} className="border-b border-[#dde0e3] hover:bg-[#f8f9fa]">
+                    <td className="sticky left-0 bg-white z-10 px-4 py-3 border-r border-[#dde0e3]">
+                      <input
+                        type="checkbox"
+                        checked={selectedCRNs.includes(section.crn)}
+                        onChange={() => handleCheckboxChange(section.crn)}
+                        className="w-4 h-4 rounded border-gray-300 text-[#1978e5] focus:ring-[#1978e5] focus:ring-2"
+                      />
+                    </td>
+                    <td className="px-4 py-3 text-sm">{section.crn}</td>
+                    <td className="px-4 py-3 text-sm">{section.subject}</td>
+                    <td className="px-4 py-3 text-sm">{section.course_number}</td>
+                    <td className="px-4 py-3 text-sm">{section.modality}</td>
+                    <td className="px-4 py-3 text-sm">{section.instructor}</td>
+                    <td className="px-4 py-3 text-sm">{section.days}</td>
+                    <td className="px-4 py-3 text-sm">{section.begin_time}</td>
+                    <td className="px-4 py-3 text-sm">{section.end_time}</td>
+                    <td className="px-4 py-3 text-sm">{section.location}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Show scroll hint on mobile */}
+        <div className="block md:hidden text-center text-sm text-gray-500 mt-2">
+          ← Scroll horizontally to see all columns →
         </div>
 
         <div className="flex justify-between mt-6 px-4">
@@ -106,17 +114,17 @@ export default function SectionsPage() {
             onClick={handleBackToHome}
             className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-[#1978e5] hover:bg-[#1461b4] rounded-xl transition-colors cursor-pointer"
           >
-            <svg 
-              width="20" 
-              height="20" 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              stroke="currentColor" 
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
               strokeWidth="2"
-              strokeLinecap="round" 
+              strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <path d="M19 12H5M12 19l-7-7 7-7"/>
+              <path d="M19 12H5M12 19l-7-7 7-7" />
             </svg>
             Back to Home
           </button>
