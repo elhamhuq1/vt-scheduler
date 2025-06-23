@@ -1,65 +1,62 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { useCourses } from '../context/CourseContext';
+import { useState, useEffect } from "react"
+import { useNavigate, useParams, useLocation } from "react-router-dom"
+import { useCourses } from "../context/CourseContext"
 
 export default function SectionsPage() {
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { subject, courseNumber } = useParams();
-  const { selectedSections, updateSelectedSections } = useCourses();
-  const [sections, setSections] = useState([]);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+  const location = useLocation()
+  const navigate = useNavigate()
+  const { subject, courseNumber } = useParams()
+  const { selectedSections, updateSelectedSections } = useCourses()
+  const [sections, setSections] = useState([])
   const [selectedCRNs, setSelectedCRNs] = useState(() => {
-    const courseId = `${subject}-${courseNumber}`;
-    return (selectedSections[courseId] || []).map(section => section.crn);
-  });
+    const courseId = `${subject}-${courseNumber}`
+    return (selectedSections[courseId] || []).map((section) => section.crn)
+  })
 
   // Refetch data when route changes
   useEffect(() => {
     const fetchSections = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/courses?subject=${subject}`);
-        if (!response.ok) throw new Error('Failed to fetch sections');
-        const data = await response.json();
-        setSections(data.filter(section => section.course_number === courseNumber));
+        const response = await fetch(`${API_BASE_URL}/api/courses?subject=${subject}`)
+        if (!response.ok) throw new Error("Failed to fetch sections")
+        const data = await response.json()
+        setSections(data.filter((section) => section.course_number === courseNumber))
       } catch (error) {
-        console.error('Error:', error);
+        console.error("Error:", error)
       }
-    };
+    }
 
-    fetchSections();
-  }, [subject, courseNumber, location]);
+    fetchSections()
+  }, [subject, courseNumber, location])
 
   const handleBackToHome = () => {
-    const courseId = `${subject}-${courseNumber}`;
-    const selectedSectionData = sections.filter(section => 
-      selectedCRNs.includes(section.crn)
-    );
-    updateSelectedSections(courseId, selectedSectionData);
-    navigate('/', { state: { from: location.pathname } });
-  };
+    const courseId = `${subject}-${courseNumber}`
+    const selectedSectionData = sections.filter((section) => selectedCRNs.includes(section.crn))
+    updateSelectedSections(courseId, selectedSectionData)
+    navigate("/", { state: { from: location.pathname } })
+  }
 
   const handleCheckboxChange = (crn) => {
-    setSelectedCRNs(prev => {
+    setSelectedCRNs((prev) => {
       if (prev.includes(crn)) {
-        return prev.filter(x => x !== crn);
+        return prev.filter((x) => x !== crn)
       } else {
-        return [...prev, crn];
+        return [...prev, crn]
       }
-    });
-  };
+    })
+  }
 
   return (
-    <div className="px-40 flex flex-1 justify-center py-5">
+    <div className="px-2 md:px-40 flex flex-1 justify-center py-5">
       <div className="flex flex-col flex-1">
         <h2 className="text-[#121416] text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3">
           Sections for {subject} {courseNumber}
         </h2>
-        
+
+        {/* Mobile-friendly table container with horizontal scroll */}
         <div className="w-full overflow-x-auto border border-[#dde0e3] rounded-lg">
           <div className="min-w-[1000px]">
-            {" "}
-            {/* Minimum width to ensure proper layout */}
             <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-[#f0f2f4]">
@@ -131,5 +128,5 @@ export default function SectionsPage() {
         </div>
       </div>
     </div>
-  );
+  )
 }
